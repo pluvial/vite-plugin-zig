@@ -1,0 +1,11 @@
+{
+  "name": "vite-plugin-zig",
+  "version": "0.0.1",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {},
+  "devDependencies": {
+    "vite": "^2.7.13"
+  }
+}
