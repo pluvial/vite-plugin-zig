@@ -5,8 +5,10 @@ pub fn build(b: *std.build.Builder) void {
     // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall.
     const mode = b.standardReleaseOptions();
 
-    const lib = b.addStaticLibrary("vite-zig-project", "src/main.zig");
+    const lib = b.addSharedLibrary("main", "src/main.zig", .unversioned);
     lib.setBuildMode(mode);
+    lib.setTarget(.{ .cpu_arch = .wasm32, .os_tag = .freestanding });
+    lib.setOutputDir("dist/assets");
     lib.install();
 
     const main_tests = b.addTest("src/main.zig");
