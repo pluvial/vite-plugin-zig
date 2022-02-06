@@ -1,12 +1,19 @@
 {
   "name": "vite-plugin-zig",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
   "license": "MIT",
   "repository": {
     "url": "https://github.com/pluvial/vite-plugin-zig"
   },
-  "type": "module",
+  "exports": {
+    "import": "./index.js"
+  },
   "main": "index.js",
+  "type": "module",
   "scripts": {},
   "devDependencies": {
     "vite": "^2.7.13"
