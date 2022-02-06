@@ -1,16 +1,28 @@
 {
   "name": "vite-plugin-zig",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "files": [
     "index.js",
+    "index.cjs",
     "index.d.ts"
+  ],
+  "keywords": [
+    "rollup",
+    "rollup-plugin",
+    "vite",
+    "vite-plugin",
+    "wasm",
+    "zig"
   ],
   "license": "MIT",
   "repository": {
     "url": "https://github.com/pluvial/vite-plugin-zig"
   },
   "exports": {
-    "import": "./index.js"
+    ".": {
+      "import": "./index.js",
+      "require": "./index.cjs"
+    }
   },
   "main": "index.js",
   "type": "module",
