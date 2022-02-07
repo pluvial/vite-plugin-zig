@@ -1,0 +1,17 @@
+{
+  "name": "svelte-kit-zig-project",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "svelte-kit dev",
+    "build": "svelte-kit build",
+    "package": "svelte-kit package",
+    "preview": "svelte-kit preview"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "next",
+    "@sveltejs/kit": "next",
+    "svelte": "^3.44.0",
+    "vite-plugin-zig": "workspace:*"
+  },
+  "type": "module"
+}

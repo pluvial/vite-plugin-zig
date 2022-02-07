@@ -56,16 +56,17 @@ function zig() {
         const wasm = await fs.readFile(temp_file);
         const dir = path.posix.join(config.build.assetsDir, "wasm");
         const output_file = path.posix.join(dir, wasm_file);
+        const output_url = path.posix.join(config.base, output_file);
         map.set(output_file, wasm);
         const code2 = config.build.target === "esnext" ? `
 const importObject = { env: { print(result) { console.log(result); } } };
-export const promise = WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject);
+export const promise = WebAssembly.instantiateStreaming(fetch("${output_url}"), importObject);
 export const { module, instance } = await promise;
 export const { exports } = instance;
 ` : `
 const importObject = { env: { print(result) { console.log(result); } } };
 export let module, instance, exports;
-export const promise = WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject).then(result => {
+export const promise = WebAssembly.instantiateStreaming(fetch("${output_url}"), importObject).then(result => {
   ({ module, instance } = result);
   ({ exports } = instance);
 })
