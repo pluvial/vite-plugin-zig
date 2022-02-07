@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-zig",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "files": [
     "index.js",
     "index.cjs",
@@ -26,8 +26,12 @@
   },
   "main": "index.js",
   "type": "module",
-  "scripts": {},
+  "scripts": {
+    "build-cjs": "esbuild index.js --bundle --platform=node --outfile=index.cjs",
+    "prepublish": "pnpm build-cjs"
+  },
   "devDependencies": {
+    "esbuild": "^0.14.20",
     "vite": "^2.7.13"
   }
 }
