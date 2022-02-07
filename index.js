@@ -43,7 +43,6 @@ export default function zig() {
     async transform(code, id, options) {
       // console.log({ code, id, options });
       if (id.endsWith(ext)) {
-        console.log(`transform ${id}`);
         const name = path.basename(id).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(os.tmpdir(), wasm_file);
@@ -65,12 +64,24 @@ export default function zig() {
         //   name: wasm_file,
         // });
         // TODO: const url = `import.meta.ROLLUP_FILE_URL_${referenceId}`;
-        return {
-          code: `
+        const code =
+          config.build.target === 'esnext'
+            ? `
 const importObject = { env: { print(result) { console.log(result); } } };
-export const { module, instance } = await WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject);
+export const promise = WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject);
+export const { module, instance } = await promise;
 export const { exports } = instance;
-`,
+`
+            : `
+const importObject = { env: { print(result) { console.log(result); } } };
+export let module, instance, exports;
+export const promise = WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject).then(result => {
+  ({ module, instance } = result);
+  ({ exports } = instance);
+})
+`;
+        return {
+          code,
           map: { mappings: '' },
           // moduleSideEffects: false,
         };
@@ -80,7 +91,6 @@ export const { exports } = instance;
     buildEnd() {
       // copy xxx.wasm files to /assets/xxx.wasm
       map.forEach((wasm, output_file) => {
-        console.log({ wasm, output_file });
         this.emitFile({
           type: 'asset',
           fileName: output_file,

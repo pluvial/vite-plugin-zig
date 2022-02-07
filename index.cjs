@@ -47,7 +47,6 @@ function zig() {
     name: "vite-plugin-zig",
     async transform(code, id, options) {
       if (id.endsWith(ext)) {
-        console.log(`transform ${id}`);
         const name = path.basename(id).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(os.tmpdir(), wasm_file);
@@ -58,19 +57,27 @@ function zig() {
         const dir = path.posix.join(config.build.assetsDir, "wasm");
         const output_file = path.posix.join(dir, wasm_file);
         map.set(output_file, wasm);
-        return {
-          code: `
+        const code2 = config.build.target === "esnext" ? `
 const importObject = { env: { print(result) { console.log(result); } } };
-export const { module, instance } = await WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject);
+export const promise = WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject);
+export const { module, instance } = await promise;
 export const { exports } = instance;
-`,
+` : `
+const importObject = { env: { print(result) { console.log(result); } } };
+export let module, instance, exports;
+export const promise = WebAssembly.instantiateStreaming(fetch("${output_file}"), importObject).then(result => {
+  ({ module, instance } = result);
+  ({ exports } = instance);
+})
+`;
+        return {
+          code: code2,
           map: { mappings: "" }
         };
       }
     },
     buildEnd() {
       map.forEach((wasm, output_file) => {
-        console.log({ wasm, output_file });
         this.emitFile({
           type: "asset",
           fileName: output_file,
