@@ -42,14 +42,15 @@ export default function zig() {
     // },
     async transform(code, id, options) {
       // console.log({ code, id, options });
-      if (id.endsWith(ext)) {
-        const name = path.basename(id).slice(0, -ext.length);
+      const [filename, raw_query] = id.split(`?`, 2);
+      if (filename.endsWith(ext)) {
+        const name = path.basename(filename).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(os.tmpdir(), wasm_file);
         const cmd = `zig build-lib -dynamic -target wasm32-freestanding ${
           // TODO: check for dev/prd here
           true ? '-Drelease-small' : ''
-        } -femit-bin=${temp_file} ${id}`.split(' ');
+        } -femit-bin=${temp_file} ${filename}`.split(' ');
         const zig = spawn(cmd[0], cmd.slice(1), { stdio: 'inherit' });
         await run(zig);
         const wasm = await fs.readFile(temp_file);
@@ -58,28 +59,55 @@ export default function zig() {
         const output_file = path.posix.join(dir, wasm_file);
         const output_url = path.posix.join(config.base, output_file);
         map.set(output_file, wasm);
+        // TODO: was previously using this.emitFile() to have Rollup emit the
+        // file with the hashed filename and then referencing it in the exported
+        // module, need to find an alternative as currently the wasm filename
+        // has no hash
         // const wasm = await fs.readFile(output_file);
         // const referenceId = this.emitFile({
         //   type: 'asset',
         //   source: wasm,
         //   name: wasm_file,
         // });
-        // TODO: const url = `import.meta.ROLLUP_FILE_URL_${referenceId}`;
+        //  const output_url = `import.meta.ROLLUP_FILE_URL_${referenceId}`;
+
+        const query = new URLSearchParams(raw_query);
+        const instantiate = query.get('instantiate') !== null;
         const code =
           config.build.target === 'esnext'
-            ? `
+            ? instantiate
+              ? `
 const importObject = { env: { print(result) { console.log(result); } } };
-export const promise = WebAssembly.instantiateStreaming(fetch("${output_url}"), importObject);
-export const { module, instance } = await promise;
+export const { module, instance } = await WebAssembly.instantiateStreaming(fetch("${output_url}"), importObject);
 export const { exports } = instance;
 `
-            : `
+              : `
+export const module = await WebAssembly.compileStreaming(fetch('${output_url}'));
+export const instantiate = importObject => WebAssembly.instantiate(module, importObject).then(instance => {
+  const { exports } = instance;
+  return { instance, exports };
+});
+`
+            : instantiate
+            ? `
 const importObject = { env: { print(result) { console.log(result); } } };
 export let module, instance, exports;
-export const promise = WebAssembly.instantiateStreaming(fetch("${output_url}"), importObject).then(result => {
+export const instantiated = WebAssembly.instantiateStreaming(fetch("${output_url}"), importObject).then(result => {
   ({ module, instance } = result);
   ({ exports } = instance);
 })
+`
+            : `
+const importObject = { env: { print(result) { console.log(result); } } };
+export let module;
+export const compiled = WebAssembly.compileStreaming(fetch("${output_url}")).then(result => {
+  module = result;
+  return module;
+})
+export const instantiate = importObject => compiled.then(module => WebAssembly.instantiate(module, importObject).then(instance => {
+  const { exports } = instance;
+  return { instance, exports };
+});
 `;
         return {
           code,
@@ -116,9 +144,7 @@ export const promise = WebAssembly.instantiateStreaming(fetch("${output_url}"), 
       server.middlewares.use((req, res, next) => {
         const url = req.url?.replace(/^\//, '') || '';
         if (map.get(url)) {
-          res.writeHead(200, {
-            'Content-Type': 'application/wasm',
-          });
+          res.writeHead(200, { 'Content-Type': 'application/wasm' });
           res.end(map.get(url));
           return;
         }

@@ -6,7 +6,10 @@ document.querySelector('#app').innerHTML = `
 `;
 
 const { add } = await import('./module.js');
-console.log(add(1)(2));
+console.log(add(5)(37));
 
-const { exports } = await import('./src/main.zig');
-console.log(exports.add(1, 2));
+// test cases
+import './static_import';
+import './static_import_instantiate';
+import './dynamic_import';
+import './dynamic_import_instantiate';

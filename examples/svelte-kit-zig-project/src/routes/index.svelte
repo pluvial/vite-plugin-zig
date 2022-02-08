@@ -2,11 +2,9 @@
   import { onMount } from 'svelte';
 
   onMount(async () => {
-    const wasm = await import('$lib/main.zig');
-    await wasm.promise;
-    const a = 2;
-    const b = 3;
-    console.log(`Calling zig wasm: ${a} + ${b} = ${wasm.exports.add(a, b)}`);
+    const wasm = await import('$lib/main.zig?instantiate');
+    await wasm.instantiated;
+    console.log(wasm.exports.add(5, 37)); // 42
   });
 </script>
 
