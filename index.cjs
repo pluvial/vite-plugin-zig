@@ -40,7 +40,7 @@ var run = (p) => new Promise((resolve, reject) => {
   p.on("close", (code) => code === 0 ? resolve() : reject(new Error(`Command ${p.spawnargs.join(" ")} failed with error code: ${code}`)));
   p.on("error", reject);
 });
-function zig() {
+function zig({ outDir = "wasm", tmpDir = os.tmpdir() } = {}) {
   let config;
   const map = /* @__PURE__ */ new Map();
   return {
@@ -50,12 +50,13 @@ function zig() {
       if (filename.endsWith(ext)) {
         const name = path.basename(filename).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
-        const temp_file = path.posix.join(os.tmpdir(), wasm_file);
-        const cmd = `zig build-lib -dynamic -target wasm32-freestanding ${true ? "-Drelease-small" : ""} -femit-bin=${temp_file} ${filename}`.split(" ");
-        const zig2 = (0, import_child_process.spawn)(cmd[0], cmd.slice(1), { stdio: "inherit" });
+        const temp_file = path.posix.join(tmpDir, wasm_file);
+        const command = `zig build-lib -dynamic -target wasm32-freestanding ${true ? "-Drelease-small" : ""} -femit-bin=${temp_file} ${filename}`;
+        const [cmd, ...args] = command.split(" ");
+        const zig2 = (0, import_child_process.spawn)(cmd, args, { stdio: "inherit" });
         await run(zig2);
         const wasm = await fs.readFile(temp_file);
-        const dir = path.posix.join(config.build.assetsDir, "wasm");
+        const dir = path.posix.join(config.build.assetsDir, outDir);
         const output_file = path.posix.join(dir, wasm_file);
         const output_url = path.posix.join(config.base, output_file);
         map.set(output_file, wasm);
