@@ -4,7 +4,7 @@ Import WebAssembly modules compiled from Zig files.
 
 ## Prerequisites
 
-- Install the [Zig compiler](https://ziglang.org): the binary can be downloaded from [downloads page](https://ziglang.org/download), or built from source by following the [GitHub Wiki instructions](https://github.com/ziglang/zig/wiki/Building-Zig-From-Source), or using the [zig-bootstrap](https://github.com/ziglang/zig-bootstrap) scripts.
+- Install the [Zig compiler](https://ziglang.org): the binary can be downloaded from [downloads page](https://ziglang.org/download), or built from source by following the [GitHub Wiki instructions](https://github.com/ziglang/zig/wiki/Building-Zig-From-Source), or using the [zig-bootstrap](https://github.com/ziglang/zig-bootstrap) scripts. As an alternative, the [`@ziglang/cli`](https://github.com/pluvial/node-zig/tree/main/packages/cli) npm package can be added as a dependency, useful in a CI environment for instance.
 
 ## Usage
 
