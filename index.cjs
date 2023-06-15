@@ -51,7 +51,7 @@ function zig({ outDir = "wasm", tmpDir = os.tmpdir() } = {}) {
         const name = path.basename(filename).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(tmpDir, wasm_file);
-        const command = `zig build-lib -dynamic -target wasm32-freestanding ${true ? "-Drelease-small" : ""} -femit-bin=${temp_file} ${filename}`;
+        const command = `zig build-lib -dynamic -rdynamic -target wasm32-freestanding ${true ? "-Drelease-small" : ""} -femit-bin=${temp_file} ${filename}`;
         const [cmd, ...args] = command.split(" ");
         const zig2 = (0, import_child_process.spawn)(cmd, args, { stdio: "inherit" });
         await run(zig2);

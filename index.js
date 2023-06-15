@@ -52,7 +52,7 @@ export default function zig({ outDir = 'wasm', tmpDir = os.tmpdir() } = {}) {
         const name = path.basename(filename).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(tmpDir, wasm_file);
-        const command = `zig build-lib -dynamic -target wasm32-freestanding ${
+        const command = `zig build-lib -dynamic -rdynamic -target wasm32-freestanding ${
           // TODO: check for dev/prd here
           true ? '-Drelease-small' : ''
         } -femit-bin=${temp_file} ${filename}`;
