@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "vite": "^4.4.5",
-    "vite-plugin-inspect": "^0.4.3",
+    "vite-plugin-inspect": "^0.7.35",
     "vite-plugin-zig": "workspace:*"
   }
 }

@@ -4,40 +4,50 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __markAsModule = (target) => __defProp(target, "__esModule", { value: true });
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
-var __reExport = (target, module2, copyDefault, desc) => {
-  if (module2 && typeof module2 === "object" || typeof module2 === "function") {
-    for (let key of __getOwnPropNames(module2))
-      if (!__hasOwnProp.call(target, key) && (copyDefault || key !== "default"))
-        __defProp(target, key, { get: () => module2[key], enumerable: !(desc = __getOwnPropDesc(module2, key)) || desc.enumerable });
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
   }
-  return target;
+  return to;
 };
-var __toESM = (module2, isNodeMode) => {
-  return __reExport(__markAsModule(__defProp(module2 != null ? __create(__getProtoOf(module2)) : {}, "default", !isNodeMode && module2 && module2.__esModule ? { get: () => module2.default, enumerable: true } : { value: module2, enumerable: true })), module2);
-};
-var __toCommonJS = /* @__PURE__ */ ((cache) => {
-  return (module2, temp) => {
-    return cache && cache.get(module2) || (temp = __reExport(__markAsModule({}), module2, 1), cache && cache.set(module2, temp), temp);
-  };
-})(typeof WeakMap !== "undefined" ? /* @__PURE__ */ new WeakMap() : 0);
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // index.js
 var vite_plugin_zig_exports = {};
 __export(vite_plugin_zig_exports, {
   default: () => zig
 });
+module.exports = __toCommonJS(vite_plugin_zig_exports);
 var import_child_process = require("child_process");
 var fs = __toESM(require("fs/promises"), 1);
 var path = __toESM(require("path"), 1);
 var os = __toESM(require("os"), 1);
 var ext = ".zig";
 var run = (p) => new Promise((resolve, reject) => {
-  p.on("close", (code) => code === 0 ? resolve() : reject(new Error(`Command ${p.spawnargs.join(" ")} failed with error code: ${code}`)));
+  p.on(
+    "close",
+    (code) => code === 0 ? resolve() : reject(
+      new Error(
+        `Command ${p.spawnargs.join(
+          " "
+        )} failed with error code: ${code}`
+      )
+    )
+  );
   p.on("error", reject);
 });
 function zig({ outDir = "wasm", tmpDir = os.tmpdir() } = {}) {
@@ -45,13 +55,23 @@ function zig({ outDir = "wasm", tmpDir = os.tmpdir() } = {}) {
   const map = /* @__PURE__ */ new Map();
   return {
     name: "vite-plugin-zig",
+    // resolveId(source, importer, options) {
+    //   console.log({ source, importer, options });
+    // },
+    // load(id, options) {
+    //   console.log({ id, options });
+    //   if (id.endsWith(ext)) {
+    //     console.log(`load ${id}`);
+    //   }
+    // },
     async transform(code, id, options) {
       const [filename, raw_query] = id.split(`?`, 2);
       if (filename.endsWith(ext)) {
         const name = path.basename(filename).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(tmpDir, wasm_file);
-        const command = `zig build-lib -dynamic -rdynamic -target wasm32-freestanding ${true ? "-Drelease-small" : ""} -femit-bin=${temp_file} ${filename}`;
+        const command = `zig build-lib -dynamic -rdynamic -target wasm32-freestanding ${// TODO: check for dev/prd here
+        true ? "-Drelease-small" : ""} -femit-bin=${temp_file} ${filename}`;
         const [cmd, ...args] = command.split(" ");
         const zig2 = (0, import_child_process.spawn)(cmd, args, { stdio: "inherit" });
         await run(zig2);
@@ -94,21 +114,33 @@ export const instantiate = importObject => compiled.then(module => WebAssembly.i
         return {
           code: code2,
           map: { mappings: "" }
+          // moduleSideEffects: false,
         };
       }
     },
+    // adapted from vite-plugin-wasm-pack
     buildEnd() {
       map.forEach((wasm, output_file) => {
         this.emitFile({
           type: "asset",
           fileName: output_file,
+          // name: path.basename(output_file),
           source: wasm
         });
       });
     },
+    // alternative approach used in vite-plugin-wasm-go
+    // closeBundle() {
+    //   map.forEach((value, output_file) => {
+    //     const buildFilename = path.posix.join(buildConfig.build.outDir, output_file);
+    //     await fs.mkdirs(path.dirname(buildFilename));
+    //     await fs.writeFile(buildFilename, value);
+    //   });
+    // },
     configResolved(resolvedConfig) {
       config = resolvedConfig;
     },
+    // adapted from vite-plugin-wasm-go
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
         const url = req.url?.replace(/^\//, "") || "";
@@ -122,6 +154,3 @@ export const instantiate = importObject => compiled.then(module => WebAssembly.i
     }
   };
 }
-module.exports = __toCommonJS(vite_plugin_zig_exports);
-// Annotate the CommonJS export names for ESM import in node:
-0 && (module.exports = {});
