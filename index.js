@@ -10,13 +10,7 @@ const run = p =>
     p.on('close', code =>
       code === 0
         ? resolve()
-        : reject(
-            new Error(
-              `Command ${p.spawnargs.join(
-                ' ',
-              )} failed with error code: ${code}`,
-            ),
-          ),
+        : reject(new Error(`Command ${p.spawnargs.join(' ')} failed with error code: ${code}`)),
     );
     p.on('error', reject);
   });
@@ -52,10 +46,11 @@ export default function zig({ outDir = 'wasm', tmpDir = os.tmpdir() } = {}) {
         const name = path.basename(filename).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(tmpDir, wasm_file);
-        const command = `zig build-lib -dynamic -rdynamic -target wasm32-freestanding ${
-          // TODO: check for dev/prd here
-          true ? '-Drelease-small' : ''
-        } -femit-bin=${temp_file} ${filename}`;
+        // TODO: check for dev/prd here
+        const mode = 'ReleaseSmall'; // | 'Debug' | 'ReleaseFast' | 'ReleaseSafe'
+        const command = `zig build-exe ${filename} -femit-bin=${temp_file} -fno-entry -rdynamic -target wasm32-freestanding -O ${
+          mode
+        }`;
         const [cmd, ...args] = command.split(' ');
         const zig = spawn(cmd, args, { stdio: 'inherit' });
         await run(zig);
@@ -95,7 +90,7 @@ export const instantiate = importObject => WebAssembly.instantiate(module, impor
 });
 `
             : instantiate
-            ? `
+              ? `
 const importObject = { env: { print(result) { console.log(result); } } };
 export let module, instance, exports;
 export const instantiated = WebAssembly.instantiateStreaming(fetch("${output_url}"), importObject).then(result => {
@@ -103,7 +98,7 @@ export const instantiated = WebAssembly.instantiateStreaming(fetch("${output_url
   ({ exports } = instance);
 })
 `
-            : `
+              : `
 const importObject = { env: { print(result) { console.log(result); } } };
 export let module;
 export const compiled = WebAssembly.compileStreaming(fetch("${output_url}")).then(result => {

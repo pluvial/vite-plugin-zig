@@ -40,13 +40,7 @@ var ext = ".zig";
 var run = (p) => new Promise((resolve, reject) => {
   p.on(
     "close",
-    (code) => code === 0 ? resolve() : reject(
-      new Error(
-        `Command ${p.spawnargs.join(
-          " "
-        )} failed with error code: ${code}`
-      )
-    )
+    (code) => code === 0 ? resolve() : reject(new Error(`Command ${p.spawnargs.join(" ")} failed with error code: ${code}`))
   );
   p.on("error", reject);
 });
@@ -70,8 +64,8 @@ function zig({ outDir = "wasm", tmpDir = os.tmpdir() } = {}) {
         const name = path.basename(filename).slice(0, -ext.length);
         const wasm_file = `${name}.wasm`;
         const temp_file = path.posix.join(tmpDir, wasm_file);
-        const command = `zig build-lib -dynamic -rdynamic -target wasm32-freestanding ${// TODO: check for dev/prd here
-        true ? "-Drelease-small" : ""} -femit-bin=${temp_file} ${filename}`;
+        const mode = "ReleaseSmall";
+        const command = `zig build-exe ${filename} -femit-bin=${temp_file} -fno-entry -rdynamic -target wasm32-freestanding -O ${mode}`;
         const [cmd, ...args] = command.split(" ");
         const zig2 = (0, import_child_process.spawn)(cmd, args, { stdio: "inherit" });
         await run(zig2);
