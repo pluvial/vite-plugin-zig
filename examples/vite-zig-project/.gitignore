@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-zig-cache/
-zig-out/
-*.wasm
